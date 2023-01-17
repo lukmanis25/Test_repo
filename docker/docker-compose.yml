@@ -1,0 +1,65 @@
+version: '3'
+
+volumes:
+   my_presta_volume:
+   mariadb_volume:
+
+
+services:
+   mariadb:
+     image: mariadb
+     volumes:
+       - mariadb_volume:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: haslo
+       MYSQL_DATABASE: prestashop
+     networks:
+       myprestashop:
+
+   prestashop:
+     image: my_presta
+     ports:
+       - "8080:80"
+     networks:
+       myprestashop:
+     links:
+       - mariadb:mariadb
+     depends_on:
+       - mariadb
+     restart: always
+     environment:
+       DB_SERVER: mariadb
+       DB_USER: root
+       DB_PASSWD: haslo
+       DB_NAME: prestashop
+       PS_INSTALL_AUTO: 0
+       PS_ERASE_DB: 0
+       PS_DEV_MODE: 0
+       PS_FOLDER_ADMIN: admin123
+       PS_FOLDER_INSTALL: install123
+     volumes:
+       -  my_presta_volume:/var/www/html
+       - ./my_presta/src/modules:/var/www/html/modules
+       - ./my_presta/src/themes:/var/www/html/themes
+       - ./my_presta/src/override:/var/www/html/override
+
+   phpmyadmin:
+     image: phpmyadmin/phpmyadmin
+     ports:
+       - "1235:80"
+     links:
+       - mariadb:mariadb
+     depends_on:
+       - mariadb
+     environment:
+       PMA_HOST: mariadb
+       PMA_USER: root
+       PMA_PASSWORD: haslo
+     networks:
+       myprestashop:
+
+
+            
+networks:
+    myprestashop:
