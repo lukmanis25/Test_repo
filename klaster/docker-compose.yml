@@ -1,16 +1,17 @@
 version: '3'
 
-volumes:
-   my_presta_volume:
-   mariadb_volume:
-
 
 services:
    mariadb:
      image: mariadb
-     volumes:
-       - mariadb_volume:/var/lib/mysql
-     restart: always
+     ports:
+       - "18433:3306"
+     deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 60s
      environment:
        MYSQL_ROOT_PASSWORD: haslo
        MYSQL_DATABASE: prestashop
@@ -18,16 +19,22 @@ services:
        myprestashop:
 
    prestashop:
-     image: my_presta
+     image: lemio23/be-project
      ports:
-       - "8080:80"
+       - "18430:80"
+       - "18431:443"
      networks:
        myprestashop:
      links:
        - mariadb:mariadb
      depends_on:
        - mariadb
-     restart: always
+     deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 60s
      environment:
        DB_SERVER: mariadb
        DB_USER: root
@@ -36,18 +43,11 @@ services:
        PS_INSTALL_AUTO: 0
        PS_ERASE_DB: 0
        PS_DEV_MODE: 0
-       PS_FOLDER_ADMIN: admin123
-       PS_FOLDER_INSTALL: install123
-     volumes:
-       -  my_presta_volume:/var/www/html
-       - ./my_presta/src/modules:/var/www/html/modules
-       - ./my_presta/src/themes:/var/www/html/themes
-       - ./my_presta/src/override:/var/www/html/override
 
    phpmyadmin:
      image: phpmyadmin/phpmyadmin
      ports:
-       - "1235:80"
+       - "18432:80"
      links:
        - mariadb:mariadb
      depends_on:
@@ -58,6 +58,11 @@ services:
        PMA_PASSWORD: haslo
      networks:
        myprestashop:
+       
+   memcached:
+     image: 'bitnami/memcached:latest'
+     ports:
+       - 18434:11211
 
 
             
